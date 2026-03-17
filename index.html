@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Ôn Tập Sinh Học 12 - Giữa Kỳ II</title>
+    <!-- Nhúng Tailwind CSS để thiết kế giao diện -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hiệu ứng mượt mà */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Style cho input trả lời ngắn */
+        .short-input:focus {
+            outline: none;
+            border-color: #10b981; /* Đổi màu viền xanh lá cho môn Sinh */
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans 
+
+    
+
+    <!-- MÀN HÌNH BẮT ĐẦU -->
+    <div id="start-screen" class="flex min-h-screen items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full text-center">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <!-- Icon Leaf (Sinh học) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">Ôn Tập Sinh Học 12 - Giữa Kỳ II</h1>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+                Đề cương ôn tập gồm 3 phần: Trắc nghiệm 4 lựa chọn, Trắc nghiệm Đúng/Sai, và Trả lời ngắn. Bạn cần <b>trả lời chính xác toàn bộ</b> yêu cầu của mỗi câu để được đi tiếp.
+            </p>
+            
+            <div class="mb-6 text-left">
+                <label for="user-name" class="block text-sm font-bold text-gray-700 mb-2">tên của bạn:</label>
+                <input type="text" id="user-name" class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-lg focus:border-emerald-500 focus:outline-none transition-colors" placeholder="Ví dụ: Cường,...">
+                <p id="name-error" class="text-red-500 text-sm mt-2 hidden font-medium">Vui lòng nhập tên thật và hợp lệ (từ 2 ký tự, không chứa số hay ký hiệu)!</p>
+            </div>
+
+            <button onclick="window.startQuiz()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-colors text-lg shadow-md hover:shadow-lg flex justify-center items-center gap-2">
+                Bắt đầu ôn tập 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH LÀM BÀI -->
+    <div id="quiz-screen" class="hidden flex-col items-center py-6 px-4 md:py-12 min-h-screen fade-in">
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
+            
+            <!-- Header - Thanh tiến trình -->
+            <div class="bg-white border-b border-gray-100 px-6 py-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="progress-text" class="text-sm font-semibold text-gray-500 tracking-wider uppercase">Câu 1 / 47</span>
+                    <span id="part-text" class="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full uppercase">PHẦN I</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div id="progress-bar" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+                <p id="part-instruction" class="text-xs text-gray-500 italic mt-1"></p>
+            </div>
+
+            <!-- Nội dung câu hỏi -->
+            <div class="p-6 md:p-8 flex-grow">
+                <p id="instruction" class="text-sm md:text-base font-medium text-gray-500 mb-4 italic hidden"></p>
+                <div id="context" class="bg-amber-50 border border-amber-200 rounded-xl p-4 md:p-5 mb-6 text-gray-800 text-sm md:text-base leading-relaxed whitespace-pre-line shadow-inner hidden"></div>
+                
+                <h2 id="question" class="text-xl md:text-2xl font-bold text-gray-800 mb-6 leading-snug whitespace-pre-line"></h2>
+
+                <!-- Danh sách đáp án / vùng điền đáp án -->
+                <div id="options-container" class="w-full">
+                    <!-- Các nút đáp án/input sẽ được render bằng JS ở đây -->
+                </div>
+            </div>
+
+            <!-- Footer (Thông báo & Nút đi tiếp) -->
+            <div class="bg-gray-50 border-t border-gray-100 p-6 flex justify-between items-center min-h-[88px]">
+                <div id="footer-message" class="flex-grow">
+                    <!-- Chứa thông báo Đúng/Sai -->
+                </div>
+                
+                <button id="next-btn" onclick="window.nextQuestion()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105 shadow-md flex-shrink-0 ml-4">
+                    <span id="next-btn-text">Câu tiếp theo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH KẾT THÚC -->
+    <div id="end-screen" class="hidden min-h-screen items-center justify-center p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-lg w-full text-center">
+            <div class="w-24 h-24 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <!-- Icon Trophy -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Hoàn thành xuất sắc!</h2>
+            <p class="text-gray-600 mb-6">Bạn <span id="display-user-name" class="font-bold text-emerald-600"></span> đã đi qua toàn bộ các câu hỏi của Đề Cương Sinh Học 12.</p>
+            
+            <div class="bg-slate-50 rounded-xl p-6 mb-8 border border-slate-200">
+                <p class="text-lg text-gray-700">Số câu đúng ngay lần thử đầu tiên:</p>
+                <p class="text-4xl font-extrabold text-emerald-600 mt-2">
+                    <span id="score">0</span> / <span id="total-score">0</span>
+                </p>
+                <p class="text-sm text-green-600 mt-3 font-medium">Đã tự động lưu kết quả lên hệ thống đám mây!</p>
+            </div>
+
+            <button onclick="window.restartQuiz()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors text-lg shadow-md flex justify-center items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                Ôn tập lại từ đầu
+            </button>
+        </div>
+    </div>
+
+    <!-- LOGIC ỨNG DỤNG VÀ FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ================= DỮ LIỆU ĐỀ CƯƠNG SINH HỌC 12 =================
+        const quizData = [
+            // PHẦN I: TRẮC NGHIỆM NHIỀU LỰA CHỌN (32 Câu)
+            { part: "PHẦN I", type: 'mcq', id: 1, question: "Câu 1. Loại bằng chứng tiến hoá nào sau đây được coi là bằng chứng trực tiếp?", options: [ { id: 'A', text: 'Bằng chứng giải phẫu so sánh.', isCorrect: false }, { id: 'B', text: 'Bằng chứng sinh học phân tử.', isCorrect: false }, { id: 'C', text: 'Bằng chứng tế bào học.', isCorrect: false }, { id: 'D', text: 'Bằng chứng hoá thạch.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 2, question: "Câu 2. Bằng chứng tiến hoá không chứng minh các sinh vật có nguồn gốc chung là", options: [ { id: 'A', text: 'Cơ quan thoái hoá.', isCorrect: false }, { id: 'B', text: 'Sự phát triển phôi giống nhau.', isCorrect: false }, { id: 'C', text: 'Cơ quan tương đồng.', isCorrect: false }, { id: 'D', text: 'Cơ quan tương tự.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 3, question: "Câu 3. Người và tinh tinh khác nhau, nhưng thành phần axit amin ở chuỗi β Hb như nhau chứng tỏ cùng nguồn gốc thì gọi là", options: [ { id: 'A', text: 'Bằng chứng giải phẫu so sánh.', isCorrect: false }, { id: 'B', text: 'Bằng chứng phôi sinh học.', isCorrect: false }, { id: 'C', text: 'Bằng chứng địa lí sinh học.', isCorrect: false }, { id: 'D', text: 'Bằng chứng sinh học phân tử.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 4, question: "Câu 4. Dấu vết của lá dương xỉ trên than đá được phát hiện có từ đại cổ sinh thuộc bằng chứng tiến hóa nào sau đây?", options: [ { id: 'A', text: 'Tế bào học.', isCorrect: false }, { id: 'B', text: 'Hóa thạch.', isCorrect: true }, { id: 'C', text: 'Cơ quan thoái hóa.', isCorrect: false }, { id: 'D', text: 'Sinh học phân tử.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 5, question: "Câu 5. Cặp cơ quan nào sau đây là cơ quan tương đồng?", options: [ { id: 'A', text: 'Ruột thừa của người và dạ cỏ của trâu bò.', isCorrect: false }, { id: 'B', text: 'Tay người và cánh chim.', isCorrect: true }, { id: 'C', text: 'Tay người và chân trước của cào cào.', isCorrect: false }, { id: 'D', text: 'Gai xương rồng và gai hoa hồng.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 6, question: "Câu 6. Bằng chứng nào dưới đây được coi là bằng chứng tế bào học chứng minh tính thống nhất của sinh giới?", options: [ { id: 'A', text: 'Mã di truyền là mã bộ ba.', isCorrect: false }, { id: 'B', text: 'Tất cả các cơ thể sinh vật đều cấu tạo từ tế bào.', isCorrect: true }, { id: 'C', text: 'DNA của tất cả các loài sinh vật đều cấu tạo từ 4 loại nucleotide.', isCorrect: false }, { id: 'D', text: 'Các loài khác nhau có trình tự amino acid trên một số chuỗi polypeptide giống nhau.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 7, question: "Câu 7. Theo Darwin, đối tượng của chọn lọc tự nhiên là", options: [ { id: 'A', text: 'Quần thể.', isCorrect: false }, { id: 'B', text: 'Allele.', isCorrect: false }, { id: 'C', text: 'Loài.', isCorrect: false }, { id: 'D', text: 'Cá thể.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 8, question: "Câu 8. Phương pháp Darwin xây dựng học thuyết về chọn lọc tự nhiên và hình thành loài theo các bước nào sau đây?", options: [ { id: 'A', text: 'Quan sát thu thập dữ liệu → hình thành giả thuyết → kiểm chứng giả thuyết.', isCorrect: true }, { id: 'B', text: 'Quan sát thu thập dữ liệu → kiểm chứng giả thuyết → hình thành học thuyết.', isCorrect: false }, { id: 'C', text: 'Hình thành giả thuyết → kiểm chứng giả thuyết → quan sát thu thập dữ liệu.', isCorrect: false }, { id: 'D', text: 'Hình thành học thuyết → quan sát thu thập dữ liệu → kiểm chứng giả thuyết.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 9, question: "Câu 9. Theo Darwin, sự đa dạng của các giống vật nuôi và cây trồng là kết quả của quá trình", options: [ { id: 'A', text: 'Chọn lọc nhân tạo.', isCorrect: true }, { id: 'B', text: 'Chọn lọc tự nhiên.', isCorrect: false }, { id: 'C', text: 'Phát sinh biến dị cá thể.', isCorrect: false }, { id: 'D', text: 'Chăm sóc, nuôi dưỡng của con người.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 10, question: "Câu 10. Theo quan điểm thuyết tiến hóa hiện đại, đơn vị tiến hóa cấp cơ sở là", options: [ { id: 'A', text: 'Cá thể.', isCorrect: false }, { id: 'B', text: 'Quần thể.', isCorrect: true }, { id: 'C', text: 'Quần xã.', isCorrect: false }, { id: 'D', text: 'Hệ sinh thái.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 11, question: "Câu 11. Theo quan niệm hiện đại, các giai đoạn chính trong quá trình phát sinh sự sống trên Quả đất lần lượt là?", options: [ { id: 'A', text: 'Tiến hóa tiền sinh học – tiến hóa hóa học – tiến hóa sinh học.', isCorrect: false }, { id: 'B', text: 'Tiến hóa hóa học – tiến hóa tiền sinh học – tiến hóa sinh học.', isCorrect: true }, { id: 'C', text: 'Tiến hóa hóa học – tiến hóa sinh học – tiến hóa tiền sinh học.', isCorrect: false }, { id: 'D', text: 'Tiến hóa sinh học – tiến hóa tiền sinh học – tiến hóa hóa học.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 12, question: "Câu 12. Theo học thuyết tiến hoá tổng hợp hiện đại thì tiến hóa nhỏ là quá trình", options: [ { id: 'A', text: 'Hình thành các đơn vị phân loại trên loài như: chi, họ, bộ, lớp, ngành.', isCorrect: false }, { id: 'B', text: 'Thay đổi tần số allele và tần số các kiểu gene của quần thể dẫn đến hình thành loài mới.', isCorrect: true }, { id: 'C', text: 'Biến đổi kiểu hình của quần thể gốc đưa đến hình thành loài mới.', isCorrect: false }, { id: 'D', text: 'Biến đổi thành phần kiểu gene dẫn tới biến đổi kiểu hình mới.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 13, question: "Câu 13. Nguồn nguyên liệu sơ cấp của quá trình tiến hoá là", options: [ { id: 'A', text: 'Đột biến.', isCorrect: true }, { id: 'B', text: 'Nguồn gen du nhập.', isCorrect: false }, { id: 'C', text: 'Biến dị tổ hợp.', isCorrect: false }, { id: 'D', text: 'Quá trình giao phối.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 14, question: "Câu 14. Nhân tố nào sau đây không phải là nhân tố tiến hóa", options: [ { id: 'A', text: 'Giao phối không ngẫu nhiên.', isCorrect: false }, { id: 'B', text: 'Giao phối ngẫu nhiên.', isCorrect: true }, { id: 'C', text: 'Phiêu bạt di truyền.', isCorrect: false }, { id: 'D', text: 'Chọn lọc tự nhiên.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 15, question: "Câu 15. Đa số đột biến là có hại vì", options: [ { id: 'A', text: 'Thường làm mất đi khả năng sinh sản của cơ thể.', isCorrect: false }, { id: 'B', text: 'Phá vỡ các mối quan hệ hài hoà trong kiểu gen, giữa kiểu gen với môi trường.', isCorrect: true }, { id: 'C', text: 'Làm mất đi nhiều gen.', isCorrect: false }, { id: 'D', text: 'Biểu hiện ngẫu nhiên, không định hướng.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 16, question: "Câu 16. Phiêu bạt di truyền", options: [ { id: 'A', text: 'Luôn làm tăng vốn gene của quần thể.', isCorrect: false }, { id: 'B', text: 'Luôn làm tăng sự đa dạng di truyền của sinh vật.', isCorrect: false }, { id: 'C', text: 'Đào thải hết các allele có hại khỏi quần thể, chỉ giữ lại allele có lợi.', isCorrect: false }, { id: 'D', text: 'Làm thay đổi tần số allele không theo một hướng xác định.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 17, question: "Câu 17. Đại dịch Covid – 19 đã làm tử vong hàng triệu người trên thế giới. Xét trên quan điểm tiến hoá, sự suy giảm số lượng cá thể của quần thể người do tác động của đại dịch có thể coi là ví dụ minh hoạ cho tác động của nhân tố tiến hoá nào?", options: [ { id: 'A', text: 'Chọn lọc tự nhiên.', isCorrect: false }, { id: 'B', text: 'Phiêu bạt di truyền.', isCorrect: true }, { id: 'C', text: 'Đột biến.', isCorrect: false }, { id: 'D', text: 'Dòng gene.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 18, question: "Câu 18. Ví dụ nào sau đây minh hoạ cho dòng gene?", options: [ { id: 'A', text: 'Lừa giao phối với ngựa sinh ra con la bất thụ.', isCorrect: false }, { id: 'B', text: 'Nhà chọn giống lấy tinh trùng của bò Hà Lan phối giống cho bò Việt Nam.', isCorrect: true }, { id: 'C', text: 'Cánh hoa đậu Hà Lan phủ kín hoa, ngăn hạt phấn của hoa khác thụ phấn cho nhuỵ.', isCorrect: false }, { id: 'D', text: 'Nhà chọn giống chọn lọc những cây có năng suất cao làm giống cho vụ sau.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 19, question: "Câu 19. Trong quá trình hình thành đặc điểm thích nghi, thì nhân tố đóng vai trò sàng lọc và giữ lại kiểu gen thích nghi là", options: [ { id: 'A', text: 'Đột biến.', isCorrect: false }, { id: 'B', text: 'Chọn lọc tự nhiên.', isCorrect: true }, { id: 'C', text: 'Giao phối.', isCorrect: false }, { id: 'D', text: 'Cách li.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 20, question: "Câu 20. Loài lúa mì (Triticum aestivum) có bộ nhiễm sắc thể 6n = 42 được hình thành bằng cơ chế", options: [ { id: 'A', text: 'Cách li địa lí.', isCorrect: false }, { id: 'B', text: 'Cách li sinh thái.', isCorrect: false }, { id: 'C', text: 'Cách li tập tính.', isCorrect: false }, { id: 'D', text: 'Lai xa kèm đa bội hoá.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 21, question: "Câu 21. Tiến hóa lớn nghiên cứu về quá trình hình thành", options: [ { id: 'A', text: 'Loài và Trên loài.', isCorrect: true }, { id: 'B', text: 'Hình thành loài.', isCorrect: false }, { id: 'C', text: 'Dưới loài.', isCorrect: false }, { id: 'D', text: 'Hình thành quần thể.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 22, question: "Câu 22. Mầm mống của những cơ thể sống đầu tiên trên Trái Đất được hình thành ở", options: [ { id: 'A', text: 'Trên mặt đất.', isCorrect: false }, { id: 'B', text: 'Trong đại dương.', isCorrect: true }, { id: 'C', text: 'Trong không khí.', isCorrect: false }, { id: 'D', text: 'Trong lòng đất.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 23, question: "Câu 23. Loài người hiện nay được đặt tên gọi là:", options: [ { id: 'A', text: 'Homo sapiens (người thông minh).', isCorrect: true }, { id: 'B', text: 'Homo habilis (người khéo léo).', isCorrect: false }, { id: 'C', text: 'Homo erectus (người đứng thẳng).', isCorrect: false }, { id: 'D', text: 'Homo neanderthalensis.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 24, question: "Câu 24. Trong lịch sử phát triển sinh giới, dạng sinh vật xuất hiện sau cùng là", options: [ { id: 'A', text: 'Thực vật hạt trần và loài người.', isCorrect: false }, { id: 'B', text: 'Thực vật hạt kín và chim, thú.', isCorrect: false }, { id: 'C', text: 'Thực vật hạt kín và bộ khỉ.', isCorrect: false }, { id: 'D', text: 'Thực vật hạt kín và loài người.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 25, question: "Câu 25. Trong hệ sinh thái rừng ngập mặn, nhân tố sinh thái nào sau đây là nhân tố vô sinh?", options: [ { id: 'A', text: 'Cua.', isCorrect: false }, { id: 'B', text: 'Tôm.', isCorrect: false }, { id: 'C', text: 'Khí CO2.', isCorrect: true }, { id: 'D', text: 'Cây đước.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 26, question: "Câu 26. Có các loại môi trường phổ biến là:", options: [ { id: 'A', text: 'Môi trường đất, môi trường nước, môi trường trên cạn, môi trường sinh vật.', isCorrect: true }, { id: 'B', text: 'Môi trường đất, môi trường nước, môi trường trên cạn, môi trường bên trong.', isCorrect: false }, { id: 'C', text: 'Môi trường đất, môi trường nước, môi trường trên cạn, môi trường ngoài.', isCorrect: false }, { id: 'D', text: 'Môi trường đất, môi trường nước ngọt, nước mặn và trên cạn.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 27, question: "Câu 27. Nhận định nào dưới đây không chính xác khi nói về hiện tượng nhịp sinh học?", options: [ { id: 'A', text: 'Lá cây trinh nữ cụp lại khi bị va chạm là ví dụ về nhịp sinh học ở thực vật.', isCorrect: true }, { id: 'B', text: 'Nhịp sinh học có liên quan đến sự biến đổi có tính chu kì của điều kiện môi trường.', isCorrect: false }, { id: 'C', text: 'Nhịp sinh học có tính di truyền.', isCorrect: false }, { id: 'D', text: 'Hiện tượng gấu ngủ đông là ví dụ về nhịp sinh học ở động vật.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 28, question: "Câu 28. Có các loại nhân tố sinh thái nào:", options: [ { id: 'A', text: 'Nhân tố vô sinh, nhân tố hữu sinh, nhân tố sinh vật.', isCorrect: false }, { id: 'B', text: 'Nhân tố vô sinh, nhân tố hữu sinh, nhân tố con người.', isCorrect: false }, { id: 'C', text: 'Nhân tố vô sinh, nhân tố hữu sinh, nhân tố ngoại cảnh.', isCorrect: false }, { id: 'D', text: 'Nhân tố vô sinh, nhân tố hữu sinh.', isCorrect: true } ] },
+            { part: "PHẦN I", type: 'mcq', id: 29, question: "Câu 29. Cá chép Việt Nam có giá trị giới hạn dưới và giới hạn trên về nhiệt độ lần lượt là 2ºC và 44ºC. Khoảng giá trị nhiệt độ này được gọi là", options: [ { id: 'A', text: 'Ổ sinh thái.', isCorrect: false }, { id: 'B', text: 'Khoảng thuận lợi.', isCorrect: false }, { id: 'C', text: 'Giới hạn sinh thái.', isCorrect: true }, { id: 'D', text: 'Vùng cực thuận.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 30, question: "Câu 30. Da người có thể là môi trường sống của", options: [ { id: 'A', text: 'Giun đũa kí sinh.', isCorrect: false }, { id: 'B', text: 'Chấy, rận, nấm.', isCorrect: true }, { id: 'C', text: 'Sâu.', isCorrect: false }, { id: 'D', text: 'Thực vật bậc thấp.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 31, question: "Câu 31. Cá chép có môi trường sống là", options: [ { id: 'A', text: 'Đất.', isCorrect: false }, { id: 'B', text: 'Nước.', isCorrect: true }, { id: 'C', text: 'Không khí.', isCorrect: false }, { id: 'D', text: 'Sinh vật.', isCorrect: false } ] },
+            { part: "PHẦN I", type: 'mcq', id: 32, question: "Câu 32. Cá rô phi Việt Nam chịu lạnh đến 5,6ºC, chịu nóng đến 42ºC, các chức năng sống biểu hiện tốt nhất từ 20ºC đến 35ºC. Khoảng nhiệt độ 20ºC đến 35ºC được gọi là", options: [ { id: 'A', text: 'Giới hạn chịu đựng.', isCorrect: false }, { id: 'B', text: 'Khoảng thuận lợi.', isCorrect: true }, { id: 'C', text: 'Điểm gây chết giới hạn trên.', isCorrect: false }, { id: 'D', text: 'Điểm gây chết giới hạn dưới.', isCorrect: false } ] },
+            
+            // PHẦN II: TRẮC NGHIỆM ĐÚNG/SAI (7 Câu)
+            { 
+                part: "PHẦN II", type: 'tf', id: 33, 
+                question: "Câu 1. Dựa vào hình ảnh cấu tạo xương chi trước của Người, Báo, Cá voi, Dơi. Các nhận định dưới đây là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Đây là những cơ quan nằm ở những vị trí tương ứng trên cơ thể của những loài khác nhau.', isTrue: true },
+                    { id: 'b', text: 'b) Đây là những cơ quan thể hiện hướng tiến hóa phân li.', isTrue: true },
+                    { id: 'c', text: 'c) Đây là những cơ quan tương tự do thực hiện những chức năng khác nhau.', isTrue: false },
+                    { id: 'd', text: 'd) Gai xương rồng và tua cuốn của đậu Hà Lan cũng thuộc vào nhóm những cơ quan tương tự, như các cơ quan trên hình.', isTrue: false }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 34, 
+                question: "Câu 2. Khi nói về bằng chứng tiến hóa, phát biểu sau đây là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Những cơ quan thực hiện các chức năng khác nhau, bắt nguồn từ một nguồn gốc chung gọi là cơ quan tương đồng.', isTrue: true },
+                    { id: 'b', text: 'b) Cơ quan thoái hóa phản ánh tiến hóa đồng quy (tiến hóa hội tụ).', isTrue: false },
+                    { id: 'c', text: 'c) Những loài có họ hàng càng gần nhau thì trình tự axit amin hay trình tự các nucleotit càng có xu hướng khác xa nhau.', isTrue: false },
+                    { id: 'd', text: 'd) Tất cả các vi khuẩn, động vật, thực vật đều đuợc cấu tạo từ tế bào.', isTrue: true }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 35, 
+                question: "Câu 3. Khi nói về thuyết tiến hóa tổng hợp hiện đại, các nhận xét sau đây là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Thuyết tiến hóa tổng hợp được chia thành tiến hóa nhỏ và tiến hóa lớn.', isTrue: true },
+                    { id: 'b', text: 'b) Theo thuyết tiến hoá tổng hợp thì tiến hóa nhỏ là quá trình biến đổi kiểu hình của quần thể gốc đưa đến hình thành loài mới.', isTrue: false },
+                    { id: 'c', text: 'c) Kết quả của tiến hóa nhỏ là hình thành các đơn vị phân loại trên loài.', isTrue: false },
+                    { id: 'd', text: 'd) Theo quan điểm thuyết tiến hóa hiện đại, đơn vị tiến hóa cấp cơ sở là cá thể.', isTrue: false }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 36, 
+                question: "Câu 4. Khi nói về đặc điểm thích nghi của sinh vật, các nhận định dưới đây là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Áp lực chọn lọc càng lớn thì quá trình hình thành các đặc điểm thích nghi diễn ra càng chậm.', isTrue: false },
+                    { id: 'b', text: 'b) Mỗi đặc điểm thích nghi chỉ hợp lý tương đối.', isTrue: true },
+                    { id: 'c', text: 'c) Vi khuẩn có khả năng kháng thuốc nhanh vì gene được biểu hiện ra ngay kiểu hình và sinh sản nhanh.', isTrue: true },
+                    { id: 'd', text: 'd) Trong môi trường không có thuốc trừ sâu DDT thì dạng ruồi đột biến có kháng DDT sinh trưởng nhanh hơn dạng ruồi bình thường.', isTrue: false }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 37, 
+                question: "Câu 5. Hai loài họ hàng sống trong cùng khu phân bố nhưng lại không giao phối với nhau. Khi nói đến nguyên nhân có thể làm cho hai loài này cách li về sinh sản, các nhận định sau đây là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Chúng có nơi ở khác nhau nên các cá thể không gặp gỡ nhau được.', isTrue: true },
+                    { id: 'b', text: 'b) Nếu giao phối cũng không tạo ra con lai hoặc tạo ra con lai bất thụ.', isTrue: true },
+                    { id: 'c', text: 'c) Chúng có mùa sinh sản khác nhau.', isTrue: true },
+                    { id: 'd', text: 'd) Con lai tạo ra thường có sức sống kém nên bị đào thải.', isTrue: true }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 38, 
+                question: "Câu 6. Các phát biểu sau về các nhân tố sinh thái là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Khi tất cả các nhân tố sinh thái của môi trường đều nằm trong giới hạn sinh thái cho phép loài tồn tại và phát triển thì làm thành ổ sinh thái của loài đó.', isTrue: true },
+                    { id: 'b', text: 'b) Nhóm nhân tố sinh thái vô sinh gồm tất cả các nhân tố vật lý, hóa học và sinh học trong môi trường xung quanh sinh vật.', isTrue: false },
+                    { id: 'c', text: 'c) Nhóm nhân tố sinh thái hữu sinh bao gồm thế giới hữu cơ của môi trường và mối quan hệ giữa sinh vật với sinh vật.', isTrue: true },
+                    { id: 'd', text: 'd) Trong nhóm nhân tố sinh thái hữu sinh, nhân tố con người có ảnh hưởng lớn tới đời sống của nhiều sinh vật.', isTrue: true }
+                ] 
+            },
+            { 
+                part: "PHẦN II", type: 'tf', id: 39, 
+                question: "Câu 7. Khi nói về giới hạn sinh thái, các phát biểu sau là đúng hay sai?", 
+                statements: [
+                    { id: 'a', text: 'a) Giới hạn sinh thái là khoảng giá trị xác định của nhiều nhân tố sinh thái tác động qua lại lẫn nhau mà ở đó sinh vật có thể tồn tại và phát triển.', isTrue: false },
+                    { id: 'b', text: 'b) Cơ thể còn non và cơ thể trưởng thành nhưng có trạng thái sinh lý thay đổi đều có giới hạn sinh thái hẹp.', isTrue: true },
+                    { id: 'c', text: 'c) Khoảng chống chịu là khoảng giá trị thuộc giới hạn sinh thái, tuy nhiên các nhân tố sinh thái gây ức chế hoạt động sinh lý của sinh vật.', isTrue: true },
+                    { id: 'd', text: 'd) Loài sống ở vùng cực có giới hạn sinh thái về nhiệt độ hẹp hơn loài sống ở vùng gần xích đạo.', isTrue: false }
+                ] 
+            },
+
+            // PHẦN III: TRẮC NGHIỆM TRẢ LỜI NGẮN (8 Câu)
+            { part: "PHẦN III", type: 'short', id: 40, question: "Câu 1. Có bao nhiêu bằng chứng không phải là bằng chứng giải phẫu học so sánh?\n(1) Đa số các loài đều sử dụng chung một bộ mã di truyền.\n(2) Xương chi dưới của các loài động vật có xương sống phân bố từ trong ra ngoài tương tự nhau.\n(3) Sự tương đồng về phát triển phôi của một số loài động vật có xương sống.\n(4) Ở các loài động vật có vú, đa số con đực vẫn còn còn di tích của tuyến sữa không hoạt động.\n(5). Gai xương rồng và tua cuốn của đậu Hà Lan đều là biến dạng của lá.\n(6). Cá voi còn di tích của xương đai hông, xương đùi và xương chày, hoàn toàn không dính tới cột sống.", correctAnswer: "2" },
+            { part: "PHẦN III", type: 'short', id: 41, question: "Câu 2. Xét các đặc điểm sau:\n(1) Làm thay đổi tần số allele và thành phần kiểu gene.\n(2) Làm thay đổi thành phần kiểu gene không theo hướng xác định.\n(3) Làm giàu vốn gene của quần thể.\n(4) Mức độ tác động phụ thuộc vào kích thước quần thể.\nCó bao nhiêu đặc điểm phù hợp với tác động của phiêu bạt di truyền?", correctAnswer: "3" },
+            { part: "PHẦN III", type: 'short', id: 42, question: "Câu 3. Cho các ví dụ sau, có bao nhiêu ví dụ thể hiện đúng cặp cơ quan tương đồng?\n(1) Cánh chim và cánh dơi.\n(2) Tuyến nọc độc của rắn và tuyến nước bọt của người.\n(3) Chi trước của thú và tay người.\n(4) Cánh chim và cánh ong.", correctAnswer: "3" },
+            { part: "PHẦN III", type: 'short', id: 43, question: "Câu 4. Loài thực vật A có bộ nhiễm sắc thể lưỡng bội là 12. Loài B có bộ nhiễm sắc thể lưỡng bội là 16. Một loài mới là loài C xuất hiện do kiểu dị đa bội con lai giữa loài A và B. Bộ nhiễm sắc thể lưỡng bội của loài C có thể là bao nhiêu?", correctAnswer: "28" },
+            { part: "PHẦN III", type: 'short', id: 44, question: "Câu 5. Cho các nhân tố sinh thái: sinh vật ngoại lai, nhiệt độ, ánh sáng, nước, độ pH, nồng độ oxygen, con người. Có bao nhiêu nhân tố là nhân tố vô sinh?", correctAnswer: "5" },
+            { part: "PHẦN III", type: 'short', id: 45, question: "Câu 6. Cho các loài sinh vật: cá chép, giun đất, chim sẻ, nấm da, ếch. Có bao nhiêu loài sống ở một loại môi trường xác định?", correctAnswer: "4" },
+            { part: "PHẦN III", type: 'short', id: 46, question: "Câu 7. Cho các đặc điểm thích nghi của thực vật với điều kiện ánh sáng: sống ở tầng trên của tán rừng, lá nhỏ, lá xếp nghiêng, ít khí khổng, lá thường nằm ngang. Có bao nhiêu đặc điểm phù hợp với cây ưa sáng?", correctAnswer: "3" },
+            { part: "PHẦN III", type: 'short', id: 47, question: "Câu 8. Cho các đặc điểm sau về: giới hạn sinh thái, tác động tổng hợp của nhân tố sinh thái, tác động không đồng đều của nhân tố sinh thái, tác động qua lại của nhân tố sinh thái, tác động trực tiếp. Có bao nhiêu đặc điểm thể hiện quy luật tác động của nhân tố sinh thái?", correctAnswer: "4" }
+        ];
+
+        // Biến trạng thái Quiz
+        let currentIndex = 0;
+        let optionStatuses = {}; 
+        let isCurrentQuestionCorrect = false;
+        let firstTryCorrectCount = 0;
+        let hasAttemptedCurrent = false;
+        let currentUserName = ""; 
+
+        // Icons
+        const iconCheck = `<svg class="text-emerald-500 ml-auto flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`;
+        const iconX = `<svg class="text-red-500 ml-auto flex-shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>`;
+
+        
+            
+
+        // ================= LOGIC GIAO DIỆN VÀ QUIZ =================
+        window.showScreen = function(screenId) {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('flex');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('flex');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('flex');
+
+            const screen = document.getElementById(screenId);
+            screen.classList.remove('hidden');
+            screen.classList.add('flex'); 
+        };
+
+        window.startQuiz = function() {
+            const nameInput = document.getElementById('user-name').value.trim();
+            const nameError = document.getElementById('name-error');
+            
+            // Regex check: Bắt buộc từ 2 ký tự trở lên, chỉ cho phép chữ cái tiếng Việt và dấu cách (Không số, không ký hiệu lạ)
+            const nameRegex = /^[a-zA-Z\sÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ]+$/;
+
+            if (!nameInput || nameInput.length < 2 || !nameRegex.test(nameInput)) {
+                nameError.classList.remove('hidden');
+                document.getElementById('user-name').focus();
+                return;
+            }
+            
+            nameError.classList.add('hidden');
+            currentUserName = nameInput;
+            document.getElementById('display-user-name').innerText = currentUserName;
+
+            currentIndex = 0;
+            firstTryCorrectCount = 0;
+            window.showScreen('quiz-screen');
+            window.loadQuestion();
+        };
+
+        window.loadQuestion = function() {
+            optionStatuses = {};
+            isCurrentQuestionCorrect = false;
+            hasAttemptedCurrent = false;
+            
+            document.getElementById('options-container').innerHTML = '';
+            
+            const currentQ = quizData[currentIndex];
+
+            // Cập nhật Header
+            document.getElementById('progress-text').innerText = `Câu ${currentIndex + 1} / ${quizData.length}`;
+            document.getElementById('part-text').innerText = currentQ.part;
+            
+            let instructionText = "";
+            if (currentQ.type === 'mcq') instructionText = "Chọn 1 đáp án đúng nhất.";
+            if (currentQ.type === 'tf') instructionText = "Chọn Đúng hoặc Sai cho mỗi phát biểu. Chọn đúng cả 4 ý để đi tiếp.";
+            if (currentQ.type === 'short') instructionText = "Điền đáp án chính xác và bấm Kiểm tra (có thể dùng dấu phẩy hoặc chấm).";
+            document.getElementById('part-instruction').innerText = instructionText;
+
+            const progressPercentage = ((currentIndex) / quizData.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+            document.getElementById('question').innerText = currentQ.question;
+
+            window.renderOptions();
+            window.updateFooter();
+        };
+
+        // PHẦN I: Xử lý MCQ
+        window.handleMCQClick = function(optionIndex) {
+            if (isCurrentQuestionCorrect) return; 
+            const currentQ = quizData[currentIndex];
+            const option = currentQ.options[optionIndex];
+
+            if (option.isCorrect) {
+                optionStatuses[option.id] = 'correct';
+                isCurrentQuestionCorrect = true;
+                if (!hasAttemptedCurrent) firstTryCorrectCount++;
+            } else {
+                optionStatuses[option.id] = 'wrong';
+                hasAttemptedCurrent = true;
+            }
+            window.renderOptions();
+            window.updateFooter();
+        };
+
+        // PHẦN II: Xử lý Đúng/Sai
+        window.handleTFClick = function(statementId, userChoice) {
+            if (isCurrentQuestionCorrect) return;
+            const currentQ = quizData[currentIndex];
+            const stmt = currentQ.statements.find(s => s.id === statementId);
+            
+            if (optionStatuses[statementId + '_' + stmt.isTrue] === 'correct') return;
+
+            if (userChoice === stmt.isTrue) {
+                optionStatuses[statementId + '_' + userChoice] = 'correct';
+                delete optionStatuses[statementId + '_' + (!userChoice)]; 
+            } else {
+                optionStatuses[statementId + '_' + userChoice] = 'wrong';
+                hasAttemptedCurrent = true;
+            }
+
+            let correctCount = 0;
+            currentQ.statements.forEach(s => {
+                if (optionStatuses[s.id + '_' + s.isTrue] === 'correct') correctCount++;
+            });
+
+            if (correctCount === currentQ.statements.length) {
+                isCurrentQuestionCorrect = true;
+                if (!hasAttemptedCurrent) firstTryCorrectCount++;
+            }
+
+            window.renderOptions();
+            window.updateFooter();
+        };
+
+        // PHẦN III: Xử lý Trả lời ngắn (Tự luận)
+        window.handleShortCheck = function() {
+            if (isCurrentQuestionCorrect) return;
+            const currentQ = quizData[currentIndex];
+            const inputEl = document.getElementById('short-answer-input');
+            
+            // Tối ưu để chấp nhận cả dấu phẩy và chấm
+            let userVal = inputEl.value.trim().toLowerCase().replace(',', '.');
+            let correctVal = currentQ.correctAnswer.trim().toLowerCase().replace(',', '.');
+
+            if (userVal === correctVal) {
+                optionStatuses['short'] = 'correct';
+                isCurrentQuestionCorrect = true;
+                if (!hasAttemptedCurrent) firstTryCorrectCount++;
+            } else {
+                optionStatuses['short'] = 'wrong';
+                hasAttemptedCurrent = true;
+            }
+            
+            window.renderOptions();
+            window.updateFooter();
+            
+            if (!isCurrentQuestionCorrect) {
+                setTimeout(() => document.getElementById('short-answer-input').focus(), 50);
+            }
+        };
+
+        // Render Giao diện
+        window.renderOptions = function() {
+            const container = document.getElementById('options-container');
+            const currentQ = quizData[currentIndex];
+
+            if (currentQ.type === 'mcq') {
+                container.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+                container.innerHTML = '';
+                currentQ.options.forEach((option, index) => {
+                    const status = optionStatuses[option.id];
+                    const btn = document.createElement('button');
+                    let btnClass = "relative flex items-center p-4 border-2 rounded-xl text-left transition-all duration-200 ease-in-out group outline-none w-full ";
+                    let circleClass = "flex items-center justify-center w-8 h-8 rounded-full border-2 mr-4 flex-shrink-0 font-bold ";
+                    let iconHTML = "";
+
+                    if (status === 'correct') {
+                        btnClass += "bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm";
+                        circleClass += "border-emerald-500 bg-emerald-500 text-white";
+                        iconHTML = iconCheck;
+                        btn.disabled = true; 
+                    } else if (status === 'wrong') {
+                        btnClass += "bg-red-50 border-red-400 text-red-800 opacity-70";
+                        circleClass += "border-red-400 bg-red-400 text-white";
+                        iconHTML = iconX;
+                    } else {
+                        if (isCurrentQuestionCorrect) {
+                            btnClass += "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed";
+                            circleClass += "border-gray-300 text-gray-400";
+                            btn.disabled = true;
+                        } else {
+                            btnClass += "border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 text-gray-700 hover:shadow-md cursor-pointer";
+                            circleClass += "border-gray-300 text-gray-500 group-hover:border-emerald-400 group-hover:text-emerald-500";
+                        }
+                    }
+
+                    btn.className = btnClass;
+                    btn.onclick = () => window.handleMCQClick(index);
+                    btn.innerHTML = `<span class="${circleClass}">${option.id}</span><span class="text-base md:text-lg font-medium pr-2">${option.text}</span>${iconHTML}`;
+                    container.appendChild(btn);
+                });
+            } 
+            else if (currentQ.type === 'tf') {
+                container.className = "flex flex-col gap-4";
+                container.innerHTML = '';
+                currentQ.statements.forEach((stmt) => {
+                    const statusTrueBtn = optionStatuses[stmt.id + '_true'];
+                    const statusFalseBtn = optionStatuses[stmt.id + '_false'];
+                    const isStmtLocked = (optionStatuses[stmt.id + '_' + stmt.isTrue] === 'correct');
+
+                    let btnTClass = "px-4 py-2 rounded-lg border-2 font-bold transition-colors w-20 text-center ";
+                    if (statusTrueBtn === 'correct') btnTClass += "bg-emerald-500 border-emerald-500 text-white";
+                    else if (statusTrueBtn === 'wrong') btnTClass += "bg-red-500 border-red-500 text-white";
+                    else if (isStmtLocked || isCurrentQuestionCorrect) btnTClass += "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed";
+                    else btnTClass += "bg-white border-gray-300 text-gray-600 hover:border-emerald-500 hover:text-emerald-500";
+
+                    let btnFClass = "px-4 py-2 rounded-lg border-2 font-bold transition-colors w-20 text-center ";
+                    if (statusFalseBtn === 'correct') btnFClass += "bg-emerald-500 border-emerald-500 text-white";
+                    else if (statusFalseBtn === 'wrong') btnFClass += "bg-red-500 border-red-500 text-white";
+                    else if (isStmtLocked || isCurrentQuestionCorrect) btnFClass += "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed";
+                    else btnFClass += "bg-white border-gray-300 text-gray-600 hover:border-emerald-500 hover:text-emerald-500";
+
+                    const row = document.createElement('div');
+                    row.className = "flex flex-col md:flex-row md:items-center justify-between p-4 border-2 rounded-xl bg-white " + (isStmtLocked ? "border-emerald-200 bg-emerald-50" : "border-gray-200");
+                    row.innerHTML = `
+                        <div class="text-base font-medium text-gray-800 mb-3 md:mb-0 md:pr-4 flex-grow">${stmt.text}</div>
+                        <div class="flex gap-2 flex-shrink-0">
+                            <button class="${btnTClass}" onclick="window.handleTFClick('${stmt.id}', true)" ${isStmtLocked || isCurrentQuestionCorrect ? 'disabled' : ''}>ĐÚNG</button>
+                            <button class="${btnFClass}" onclick="window.handleTFClick('${stmt.id}', false)" ${isStmtLocked || isCurrentQuestionCorrect ? 'disabled' : ''}>SAI</button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+            else if (currentQ.type === 'short') {
+                container.className = "flex flex-col items-start gap-4";
+                
+                if(!document.getElementById('short-answer-input')) {
+                    container.innerHTML = `
+                        <div class="w-full max-w-sm flex gap-3">
+                            <input type="text" id="short-answer-input" class="short-input flex-grow border-2 border-gray-300 rounded-xl px-4 py-3 text-lg font-bold text-gray-800" placeholder="Nhập đáp án...">
+                            <button id="btn-check-short" onclick="window.handleShortCheck()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl transition-all shadow-md">Kiểm tra</button>
+                        </div>
+                    `;
+                    document.getElementById('short-answer-input').addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') window.handleShortCheck();
+                    });
+                }
+
+                const inputEl = document.getElementById('short-answer-input');
+                const btnCheck = document.getElementById('btn-check-short');
+
+                if (optionStatuses['short'] === 'correct') {
+                    inputEl.className = "short-input flex-grow border-2 border-emerald-500 bg-emerald-50 rounded-xl px-4 py-3 text-lg font-bold text-emerald-800";
+                    inputEl.disabled = true;
+                    btnCheck.classList.add('hidden');
+                } else if (optionStatuses['short'] === 'wrong') {
+                    inputEl.className = "short-input flex-grow border-2 border-red-400 bg-red-50 rounded-xl px-4 py-3 text-lg font-bold text-red-800";
+                    inputEl.disabled = false;
+                    btnCheck.classList.remove('hidden');
+                } else {
+                    inputEl.className = "short-input flex-grow border-2 border-gray-300 rounded-xl px-4 py-3 text-lg font-bold text-gray-800";
+                    inputEl.disabled = false;
+                    btnCheck.classList.remove('hidden');
+                }
+            }
+        };
+
+        window.updateFooter = function() {
+            const footerMessage = document.getElementById('footer-message');
+            const nextBtn = document.getElementById('next-btn');
+            const currentQ = quizData[currentIndex];
+            
+            let hasWrong = false;
+            if(currentQ.type === 'mcq' || currentQ.type === 'tf') {
+                hasWrong = Object.values(optionStatuses).includes('wrong');
+            } else if (currentQ.type === 'short') {
+                hasWrong = optionStatuses['short'] === 'wrong';
+            }
+
+            if (isCurrentQuestionCorrect) {
+                footerMessage.innerHTML = `
+                    <p class="text-emerald-600 font-bold flex items-center gap-2 text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg> 
+                        Chính xác!
+                    </p>`;
+                nextBtn.classList.remove('hidden');
+                document.getElementById('next-btn-text').innerText = (currentIndex === quizData.length - 1) ? 'Hoàn thành' : 'Câu tiếp theo';
+            } else if (hasWrong) {
+                let msg = currentQ.type === 'tf' ? "Có ý bạn chọn chưa đúng, hãy xem lại!" : "Sai rồi, hãy thử lại nhé!";
+                footerMessage.innerHTML = `
+                    <p class="text-red-500 font-medium flex items-center gap-2 animate-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>
+                        ${msg}
+                    </p>`;
+                nextBtn.classList.add('hidden');
+            } else {
+                footerMessage.innerHTML = '';
+                nextBtn.classList.add('hidden');
+            }
+        };
+
+        window.nextQuestion = function() {
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                window.loadQuestion();
+            } else {
+                window.finishQuiz();
+            }
+        };
+
+        // Ghi nhận và kết thúc
+        window.finishQuiz = function() {
+            document.getElementById('score').innerText = firstTryCorrectCount;
+            document.getElementById('total-score').innerText = quizData.length;
+            window.showScreen('end-screen');
+
+            
+
+        
+
+        window.verifyPassword = function() {
+            const pwd = document.getElementById('history-password').value;
+            if (pwd === '8168') {
+                document.getElementById('password-modal').classList.add('hidden');
+                document.getElementById('password-modal').classList.remove('flex');
+                window.showHistoryModal();
+            } else {
+                document.getElementById('pwd-error').classList.remove('hidden');
+            }
+        };
+
+        document.getElementById('history-password').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') window.verifyPassword();
+        });
+
+        window.showHistoryModal = function() {
+            document.getElementById('history-modal').classList.remove('hidden');
+            document.getElementById('history-modal').classList.add('flex');
+            window.renderHistoryList();
+        };
+
+        
+
+    </script>
+</body>
+  </html>
